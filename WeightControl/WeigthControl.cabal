@@ -1,0 +1,91 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.5.
+--
+-- see: https://github.com/sol/hpack
+
+name:           WeigthControl
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/nicvaltel/WeigthControl#readme>
+homepage:       https://github.com/nicvaltel/WeigthControl#readme
+bug-reports:    https://github.com/nicvaltel/WeigthControl/issues
+author:         nicvaltel
+maintainer:     nicvaltel@gmail.com
+copyright:      2023 nicvaltel
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/nicvaltel/WeigthControl
+
+library
+  exposed-modules:
+      Adapter.PostgreSQL.Adapter
+      Adapter.PostgreSQL.Common
+      Domain.Bot
+      Domain.Model
+      Lib
+  other-modules:
+      Paths_WeigthControl
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+      QuasiQuotes
+      NamedFieldPuns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , data-has
+    , dotenv
+    , either
+    , exceptions
+    , mtl
+    , postgresql-simple
+    , postgresql-simple-migration
+    , record-hasfield
+    , resource-pool
+    , telegram-bot-api
+    , telegram-bot-simple
+    , text
+    , time
+    , transformers
+    , unliftio
+  default-language: Haskell2010
+
+executable WeigthControl-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_WeigthControl
+  hs-source-dirs:
+      app
+  default-extensions:
+      OverloadedStrings
+      QuasiQuotes
+      NamedFieldPuns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      WeigthControl
+    , base >=4.7 && <5
+    , bytestring
+    , data-has
+    , dotenv
+    , either
+    , exceptions
+    , mtl
+    , postgresql-simple
+    , postgresql-simple-migration
+    , record-hasfield
+    , resource-pool
+    , telegram-bot-api
+    , telegram-bot-simple
+    , text
+    , time
+    , transformers
+    , unliftio
+  default-language: Haskell2010

@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:WeigthControl"
+
+    - path: "app/Main.hs"
+      component: "WeigthControl:exe:WeigthControl-exe"
+
+    - path: "app/Paths_WeigthControl.hs"
+      component: "WeigthControl:exe:WeigthControl-exe"

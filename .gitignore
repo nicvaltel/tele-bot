@@ -1,0 +1,7 @@
+DB/postgres
+# DB/database.env
+*/dist-newstyle/
+*/.stack-work/
+# WeightControl/app-db-config.env
+*~
+*.env
