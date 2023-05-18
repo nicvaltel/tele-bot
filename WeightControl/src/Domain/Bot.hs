@@ -12,7 +12,6 @@ module Domain.Bot
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Maybe
 import Data.Text
 import Telegram.Bot.API as Telegram
 import Telegram.Bot.Simple
@@ -44,13 +43,13 @@ incexpBotApp :: (Action -> ChatModel -> Eff Action ChatModel) -> BotApp ChatMode
 incexpBotApp handleAction = BotApp {botInitialModel = emptyChatModel, botAction = flip handleUpdate, botHandler = handleAction, botJobs = []}
 
 handleUpdate :: ChatModel -> Update -> Maybe Action
-handleUpdate model update =
-  let msg = fromJust $ updateMessage update
-      usr = fromJust $ messageFrom msg
-      Telegram.UserId usrId = Telegram.userId usr
-      Telegram.MessageId msgId = Telegram.messageMessageId msg
-      usrIdInt = fromIntegral usrId :: Int
-      msgIdInt = fromIntegral msgId :: Int
-      usrName = Telegram.userUsername usr
-      parser = RecordMsg usrIdInt usrName msgIdInt <$> plainText
-   in parseUpdate parser update
+handleUpdate _ update = do
+  msg <- updateMessage update
+  usr <- messageFrom msg
+  let Telegram.UserId usrId = Telegram.userId usr
+  let Telegram.MessageId msgId = Telegram.messageMessageId msg
+  let usrIdInt = fromIntegral usrId :: Int
+  let msgIdInt = fromIntegral msgId :: Int
+  let usrName = Telegram.userUsername usr
+  let parser = RecordMsg usrIdInt usrName msgIdInt <$> plainText
+  parseUpdate parser update

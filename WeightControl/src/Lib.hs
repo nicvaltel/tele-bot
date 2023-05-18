@@ -2,6 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Lib
   ( runBot,
@@ -19,40 +21,48 @@ import qualified Domain.Bot as B
 import qualified Domain.Model as M
 import Telegram.Bot.Simple (BotM, Eff, reply, toReplyMessage, (<#))
 
+newtype BotApp = BotApp {unBotApp :: PG.AppState}
+
 runBot :: FilePath -> IO ()
 runBot cfgFile = do
   Right pgCfg <- PG.readDBConfig cfgFile
   PG.withAppState pgCfg $ \pool ->
-    B.botStartup (PG.getToken pgCfg) (handleWeightControl pool)
+    B.botStartup (PG.getToken pgCfg) (handleWeightControl $ BotApp pool)
 
-getUserById_ :: PG.AppState -> M.UserId -> IO (Maybe M.User)
-getUserById_ pool uId = runReaderT (PG.getUserById uId) pool
 
-insertMsg_ :: PG.AppState -> M.UserId -> Text -> IO (Either M.MessageError (Either Text Float))
-insertMsg_ pool uId txt = runReaderT (PG.insertMsg uId txt) pool
+instance M.BotDBModel BotApp where
+  getUserById pool uId = runReaderT (PG.getUserById uId) (unBotApp pool)
+  insertMsg pool uId txt = runReaderT (PG.insertMsg uId txt) (unBotApp pool)
+  createUser pool uId uName = runReaderT (PG.createUser uId uName) (unBotApp pool)
 
-createUser_ :: PG.AppState -> M.UserId -> M.Username -> IO M.User
-createUser_ pool uId uName = runReaderT (PG.createUser uId uName) pool
 
-handleWeightControl :: PG.AppState -> B.Action -> B.ChatModel -> Eff B.Action B.ChatModel
+
+
+msgHello, msgInstruction, msgSave :: Text
+msgHello = "Я бот-запоминатель веса. Напишите вес, чтобы я сохранил его."
+msgInstruction = "Просто введите цифрами ваш вес в кг, и я запомню его"
+msgSave = "Сохранил ваш вес - " 
+
+handleWeightControl :: BotApp -> B.Action -> B.ChatModel -> Eff B.Action B.ChatModel
 handleWeightControl pool action model = traceShow action $
   case action of
     B.NoAction -> pure model
     B.RecordMsg usrId mayUsrname _ word -> do
       let usrname = fromMaybe (pack $ "user_" <> show usrId) mayUsrname
       model <# do
-        maybeUser :: Maybe M.User <- liftIO $ getUserById_ pool usrId
-        when (isNothing maybeUser) $ liftIO $ createUser_ pool usrId usrname >> pure ()
-        _ <- liftIO $ insertMsg_ pool usrId word
+        maybeUser :: Maybe M.User <- liftIO $ M.getUserById pool usrId
+        when (isNothing maybeUser) $ liftIO $ M.createUser pool usrId usrname >> pure ()
+        _ <- liftIO $ M.insertMsg pool usrId word
         case maybeUser of
           Just _ -> do
-            msgSaveResult <- liftIO $ insertMsg_ pool usrId word
+            msgSaveResult <- liftIO $ M.insertMsg pool usrId word
             case msgSaveResult of
-              Right (Right w) -> replyString $ "Сохранил ваш вес - " <> pack (show w) <> " Охренеть вы жирный!"
-              Right (Left _) -> replyString "Да что вы говорите! Очень интересно..."
+              Right (Right w) -> replyString $ msgSave <> pack (show w)
+              Right (Left _) -> replyString msgInstruction
               Left err -> replyString . pack $ show err
-          Nothing -> replyString "Я бот-запоминатель веса. Напишите вес, чтобы я сохранил его."
+          Nothing -> replyString msgHello
         pure B.NoAction
   where
     replyString :: Text -> BotM ()
     replyString = reply . toReplyMessage
+

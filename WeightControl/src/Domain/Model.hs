@@ -3,13 +3,15 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Domain.Model
-  ( UserId,
+  ( 
+    BotDBModel(..),
+    UserId,
     Username,
     MessageId,
     User (..),
     Message (..),
     MessageError (..),
-    isMessageWeight,
+    isMessageWeight
   )
 where
 
@@ -43,6 +45,14 @@ data Message = Message
 newtype MessageError = UserDoesNotExist UserId
   deriving (Show, Eq)
 
+
+class BotDBModel a where
+  getUserById :: a -> UserId -> IO (Maybe User)
+  insertMsg :: a -> UserId -> Text -> IO (Either MessageError (Either Text Float))
+  createUser :: a -> UserId -> Username -> IO User
+
+
+
 isMessageWeight :: Text -> Maybe Float
 isMessageWeight msg =
   case T.double msg of
@@ -50,3 +60,5 @@ isMessageWeight msg =
     _ -> case T.double (T.map (\c -> if c == ',' then '.' else c) msg) of
       Right (w, "") -> Just $ double2Float w
       _ -> Nothing
+
+
